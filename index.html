@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>National Geographic MapMaker · Coming soon</title>
+
+<!-- ============================================================= -->
+<!--  RELEASE TIME                                                  -->
+<!--  4:00 PM Pacific Daylight Time, 13 July 2026.                  -->
+<!--  PDT is UTC-7, so 16:00 local = 23:00 UTC. Change only if      -->
+<!--  the release time itself changes.                              -->
+<!-- ============================================================= -->
+
+<style>
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #0a0c10;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .stage {
+    position: relative;
+    width: 100%;
+    max-width: 960px;
+    aspect-ratio: 1626 / 921;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .stage img.bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Vertical gradient: light over the top (teacher + screen visible),
+     darkening toward the bottom where the date and teaser sit. */
+  .dim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(10,12,16,0.12) 0%,
+      rgba(10,12,16,0.22) 40%,
+      rgba(10,12,16,0.45) 75%,
+      rgba(10,12,16,0.68) 100%
+    );
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 5%;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 999px;
+    margin-bottom: 4.5%;
+  }
+  .badge .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ffd34d;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+  .badge .label {
+    color: #fff;
+    font-size: clamp(10px, 1.4vw, 12px);
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .lock {
+    width: clamp(54px, 10.5%, 84px);
+    height: clamp(54px, 10.5%, 84px);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.16);
+    border: 1.5px solid rgba(255,255,255,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4%;
+  }
+  .lock svg { width: 44%; height: 44%; fill: #fff; }
+
+  .title {
+    color: #fff;
+    font-size: clamp(16px, 2.6vw, 24px);
+    font-weight: 600;
+    margin: 0 0 5px;
+    line-height: 1.3;
+    text-shadow: 0 1px 12px rgba(0,0,0,0.6);
+  }
+  .esri {
+    color: rgba(255,255,255,0.82);
+    font-size: clamp(12px, 1.9vw, 16px);
+    margin: 0 0 5.5%;
+    line-height: 1.4;
+    text-shadow: 0 1px 10px rgba(0,0,0,0.6);
+  }
+
+  #cd {
+    display: flex;
+    gap: clamp(10px, 2vw, 22px);
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .unit { display: flex; flex-direction: column; align-items: center; min-width: clamp(42px, 9vw, 70px); }
+  .unit .num {
+    color: #fff;
+    font-size: clamp(26px, 5.4vw, 48px);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    text-shadow: 0 1px 14px rgba(0,0,0,0.6);
+  }
+  .unit .ulabel {
+    color: rgba(255,255,255,0.68);
+    font-size: clamp(9px, 1.4vw, 13px);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 8px;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+  }
+  .sep {
+    color: rgba(255,255,255,0.4);
+    font-size: clamp(26px, 5vw, 44px);
+    font-weight: 300;
+    line-height: 1;
+    align-self: flex-start;
+  }
+
+  .foot {
+    color: rgba(255,255,255,0.78);
+    font-size: clamp(10px, 1.5vw, 13px);
+    margin: 5% 0 0;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+  }
+  .teaser {
+    color: rgba(255,255,255,0.92);
+    font-size: clamp(12px, 1.9vw, 16px);
+    font-weight: 500;
+    margin: 12px 0 0;
+    line-height: 1.4;
+    max-width: 22em;
+    text-shadow: 0 1px 10px rgba(0,0,0,0.6);
+  }
+
+  /* Released state */
+  .live-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .play {
+    width: clamp(54px, 10.5vw, 84px);
+    height: clamp(54px, 10.5vw, 84px);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .play svg { width: 42%; height: 42%; fill: #111; margin-left: 8%; }
+
+  /* Video drops in here. Hidden until release. */
+  #video-slot { position: absolute; inset: 0; display: none; background: #000; }
+  #video-slot iframe { width: 100%; height: 100%; border: 0; }
+</style>
+</head>
+<body>
+
+  <div class="stage">
+    <img class="bg" src="placeholder.png" alt="National Geographic MapMaker demonstration in a classroom">
+    <div class="dim"></div>
+
+    <!-- ========================================================= -->
+    <!--  VIDEO SLOT                                                -->
+    <!--  On release day: paste your Kaltura embed iframe between    -->
+    <!--  the two markers below. Nothing else needs to change.       -->
+    <!-- ========================================================= -->
+    <div id="video-slot">
+      <!-- PASTE KALTURA EMBED IFRAME HERE -->
+
+      <!-- END KALTURA EMBED -->
+    </div>
+
+    <div class="overlay" id="overlay">
+      <div class="badge">
+        <span class="dot"></span>
+        <span class="label">Premiering soon</span>
+      </div>
+
+      <div class="lock" id="state-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg>
+      </div>
+
+      <p class="title">A new National Geographic MapMaker video</p>
+      <p class="esri">Revealed at the Esri User Conference, San Diego</p>
+
+      <div id="cd"></div>
+
+      <p class="foot" id="foot">Available 13 July 2026 · 4:00&nbsp;PM&nbsp;PDT</p>
+      <p class="teaser" id="teaser">Hear from teachers and students about how they are using MapMaker</p>
+    </div>
+  </div>
+
+<script>
+(function () {
+  var RELEASE = new Date("2026-07-13T23:00:00Z").getTime();
+
+  var cd        = document.getElementById("cd");
+  var foot      = document.getElementById("foot");
+  var teaser    = document.getElementById("teaser");
+  var overlay   = document.getElementById("overlay");
+  var stateIcon = document.getElementById("state-icon");
+  var videoSlot = document.getElementById("video-slot");
+
+  // clockOffset = authoritative time - this device's clock. Starts at 0.
+  var clockOffset = 0;
+  var timer = null;
+  function now() { return Date.now() + clockOffset; }
+
+  function unitHTML(num, label) {
+    return '<div class="unit"><span class="num">' + num +
+           '</span><span class="ulabel">' + label + '</span></div>';
+  }
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+
+  function showReleased() {
+    var hasEmbed = videoSlot.querySelector("iframe");
+    if (hasEmbed) {
+      overlay.style.display = "none";
+      document.querySelector(".dim").style.display = "none";
+      document.querySelector(".bg").style.display = "none";
+      videoSlot.style.display = "block";
+    } else {
+      stateIcon.outerHTML =
+        '<div class="live-wrap">' +
+          '<div class="play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></div>' +
+          '<span style="color:#fff;font-size:clamp(13px,2vw,17px);font-weight:600;text-shadow:0 1px 10px rgba(0,0,0,0.6);">The video is live</span>' +
+        '</div>';
+      cd.style.display = "none";
+      document.querySelector(".title").style.display = "none";
+      document.querySelector(".esri").style.display = "none";
+      foot.textContent = "Now available";
+    }
+  }
+
+  function tick() {
+    var diff = RELEASE - now();
+    if (diff <= 0) {
+      if (timer) clearInterval(timer);
+      showReleased();
+      return;
+    }
+    var d = Math.floor(diff / 86400000);
+    var h = Math.floor(diff % 86400000 / 3600000);
+    var m = Math.floor(diff % 3600000 / 60000);
+    var s = Math.floor(diff % 60000 / 1000);
+    cd.innerHTML =
+      unitHTML(d, "Days") + '<span class="sep">:</span>' +
+      unitHTML(pad(h), "Hours") + '<span class="sep">:</span>' +
+      unitHTML(pad(m), "Min") + '<span class="sep">:</span>' +
+      unitHTML(pad(s), "Sec");
+  }
+
+  // Tamper-resistance: fetch authoritative UTC once on load.
+  // If it fails (offline / API down), silently keep the device clock.
+  function syncClock() {
+    var t0 = Date.now();
+    fetch("https://worldtimeapi.org/api/timezone/Etc/UTC", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var serverMs = new Date(data.utc_datetime || data.datetime).getTime();
+        var rtt = Date.now() - t0;
+        clockOffset = (serverMs + rtt / 2) - Date.now();
+        tick();
+      })
+      .catch(function () { /* fall back to device clock */ });
+  }
+
+  tick();
+  timer = setInterval(tick, 1000);
+  syncClock();
+})();
+</script>
+</body>
+</html>
